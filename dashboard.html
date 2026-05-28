@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — SmallTalkLab</title>
+  <meta name="description" content="Track your English learning progress: speaking streak, accuracy, completed lessons, and daily practice time." />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ── Overview Cards ── */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .overview-card {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .overview-icon {
+      font-size: 1.8rem;
+      display: block;
+    }
+
+    .overview-value {
+      font-family: var(--font-heading);
+      font-size: 2.2rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .overview-label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .overview-change {
+      font-size: 0.78rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-weight: 600;
+    }
+
+    .overview-change.up { color: var(--accent-green); }
+    .overview-change.down { color: #ef4444; }
+
+    /* ── Charts Layout ── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .chart-card { padding: 1.75rem; }
+
+    .chart-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* ── Bar Chart ── */
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.5rem;
+      height: 160px;
+      padding-bottom: 1.5rem;
+      position: relative;
+    }
+
+    .bar-chart::after {
+      content: '';
+      position: absolute;
+      bottom: 1.5rem; left: 0; right: 0;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .bar-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .bar {
+      width: 100%;
+      border-radius: 6px 6px 0 0;
+      background: var(--gradient-primary);
+      transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      cursor: pointer;
+    }
+
+    .bar:hover::after {
+      content: attr(data-value) ' min';
+      position: absolute;
+      top: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent-blue);
+      white-space: nowrap;
+      background: var(--bg-secondary);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .bar-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* ── Donut Chart ── */
+    .donut-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .donut-svg {
+      width: 150px; height: 150px;
+      transform: rotate(-90deg);
+    }
+
+    .donut-ring { fill: none; stroke-width: 16; stroke-linecap: round; }
+
+    .donut-center {
+      text-align: center;
+      margin-top: -10px;
+    }
+
+    .donut-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      width: 100%;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+
+    /* ── Streak Calendar ── */
+    .streak-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 0.75rem;
+    }
+
+    .streak-day {
+      aspect-ratio: 1;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.05);
+      position: relative;
+      cursor: default;
+      transition: var(--transition);
+    }
+
+    .streak-day.done { background: var(--accent-blue); }
+    .streak-day.done-high { background: var(--accent-violet); }
+    .streak-day.today { border: 2px solid var(--accent-cyan); }
+
+    .streak-day-labels {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+    }
+
+    .streak-day-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* ── Activity List ── */
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.875rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .activity-item:last-child { border-bottom: none; }
+
+    .activity-icon {
+      width: 38px; height: 38px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .activity-info { flex: 1; }
+    .activity-name { font-size: 0.9rem; font-weight: 600; }
+    .activity-time { font-size: 0.78rem; color: var(--text-muted); }
+    .activity-score { font-family: var(--font-heading); font-weight: 700; font-size: 1rem; }
+
+    /* ── Reset Button ── */
+    .danger-zone { margin-top: 2rem; }
+
+    @media (max-width: 1024px) {
+      .overview-grid { grid-template-columns: repeat(2, 1fr); }
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .overview-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-animated"><div class="bg-orb bg-orb-1"></div><div class="bg-orb bg-orb-2"></div><div class="bg-orb bg-orb-3"></div></div>
+<div class="bg-grid"></div>
+
+<nav class="navbar" id="navbar">
+  <a href="index.html" class="nav-brand"><div class="brand-icon">🎤</div><span class="text-gradient">SmallTalkLab</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li><li><a href="speaking.html">Practice</a></li>
+    <li><a href="chat.html">AI Chat</a></li><li><a href="vocabulary.html">Vocabulary</a></li>
+    <li><a href="grammar.html">Grammar</a></li><li><a href="challenges.html">Challenges</a></li>
+    <li><a href="dashboard.html">Dashboard</a></li>
+  </ul>
+  <a href="speaking.html" class="btn btn-primary btn-sm nav-cta">Start Speaking</a>
+  <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index.html">🏠 Home</a><a href="speaking.html">🎤 Speaking Practice</a>
+  <a href="chat.html">🤖 AI Chat</a><a href="vocabulary.html">📚 Vocabulary</a>
+  <a href="grammar.html">✏️ Grammar</a><a href="challenges.html">🏆 Challenges</a>
+  <a href="dashboard.html">📊 Dashboard</a>
+</div>
+
+<div class="page-hero">
+  <div class="section-label">📊 Progress Dashboard</div>
+  <h1>Your <span class="text-gradient">Progress</span></h1>
+  <p>Track your speaking streak, daily practice time, accuracy scores, and completed lessons.</p>
+</div>
+
+<div class="section" style="padding-top:0;">
+
+  <!-- Overview Cards -->
+  <div class="overview-grid fade-in">
+    <div class="card overview-card">
+      <span class="overview-icon">🔥</span>
+      <span class="overview-value text-gradient" id="statStreak">0</span>
+      <span class="overview-label">Day Streak</span>
+      <span class="overview-change up" id="streakChange">Keep it going!</span>
+    </div>
+    <div class="card overview-card">
+      <span class="overview-icon">⏱️</span>
+      <span class="overview-value" style="color:var(--accent-blue);" id="statTime">0</span>
+      <span class="overview-label">Minutes Practiced</span>
+      <span class="overview-change up">↑ Total practice</span>
+    </div>
+    <div class="card overview-card">
+      <span class="overview-icon">🎯</span>
+      <span class="overview-value" style="color:var(--accent-green);" id="statAccuracy">0</span>
+      <span class="overview-label">Avg Accuracy %</span>
+      <span class="overview-change up" id="accuracyChange">Pronunciation score</span>
+    </div>
+    <div class="card overview-card">
+      <span class="overview-icon">📚</span>
+      <span class="overview-value" style="color:var(--accent-violet);" id="statLessons">0</span>
+      <span class="overview-label">Activities Done</span>
+      <span class="overview-change up">↑ Keep learning</span>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid fade-in">
+    <!-- Bar Chart: Practice Time -->
+    <div class="card chart-card">
+      <div class="chart-title">
+        📈 Weekly Practice Time (minutes)
+        <span class="badge badge-blue" id="weeklyTotal">0 min this week</span>
+      </div>
+      <div class="bar-chart" id="barChart"></div>
+      <div class="bar-chart" id="barLabels" style="height:auto;padding:0;margin-top:0.25rem;"></div>
+    </div>
+
+    <!-- Donut: Activity Breakdown -->
+    <div class="card chart-card">
+      <div class="chart-title">�</div>
+      <div class="donut-wrap">
+        <svg class="donut-svg" viewBox="0 0 100 100">
+          <circle class="donut-ring" cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.05)" stroke-dasharray="264" stroke-dashoffset="0"/>
+          <circle class="donut-ring" cx="50" cy="50" r="42" stroke="#4f8ef7" id="donut1"
+            stroke-dasharray="264" stroke-dashoffset="264"/>
+          <circle class="donut-ring" cx="50" cy="50" r="42" stroke="#8b5cf6" id="donut2"
+            stroke-dasharray="264" stroke-dashoffset="264"/>
+          <circle class="donut-ring" cx="50" cy="50" r="42" stroke="#22d3ee" id="donut3"
+            stroke-dasharray="264" stroke-dashoffset="264"/>
+          <circle class="donut-ring" cx="50" cy="50" r="42" stroke="#10b981" id="donut4"
+            stroke-dasharray="264" stroke-dashoffset="264"/>
+        </svg>
+        <div class="donut-legend">
+          <div class="legend-item">
+            <span><span class="legend-dot" style="background:#4f8ef7;"></span>Speaking</span>
+            <span id="legendSpeak">0%</span>
+          </div>
+          <div class="legend-item">
+            <span><span class="legend-dot" style="background:#8b5cf6;"></span>AI Chat</span>
+            <span id="legendChat">0%</span>
+          </div>
+          <div class="legend-item">
+            <span><span class="legend-dot" style="background:#22d3ee;"></span>Vocabulary</span>
+            <span id="legendVocab">0%</span>
+          </div>
+          <div class="legend-item">
+            <span><span class="legend-dot" style="background:#10b981;"></span>Challenges</span>
+            <span id="legendChallenge">0%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Streak Calendar + Activity -->
+  <div class="grid-2 fade-in" style="gap:1.5rem;margin-bottom:2rem;">
+    <div class="card chart-card">
+      <div class="chart-title">📅 30-Day Activity Calendar</div>
+      <div class="streak-day-labels">
+        <div class="streak-day-label">S</div><div class="streak-day-label">M</div>
+        <div class="streak-day-label">T</div><div class="streak-day-label">W</div>
+        <div class="streak-day-label">T</div><div class="streak-day-label">F</div>
+        <div class="streak-day-label">S</div>
+      </div>
+      <div style="height:0.5rem;"></div>
+      <div class="streak-grid" id="streakCalendar"></div>
+      <div style="display:flex;gap:1rem;margin-top:1rem;font-size:0.78rem;color:var(--text-muted);">
+        <span><span style="display:inline-block;width:10px;height:10px;background:rgba(255,255,255,0.05);border-radius:2px;margin-right:4px;"></span>No activity</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#4f8ef7;border-radius:2px;margin-right:4px;"></span>Active</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#8b5cf6;border-radius:2px;margin-right:4px;"></span>High activity</span>
+      </div>
+    </div>
+
+    <div class="card chart-card">
+      <div class="chart-title">🕒 Recent Activity</div>
+      <div id="activityFeed"></div>
+    </div>
+  </div>
+
+  <!-- Progress Bars -->
+  <div class="card fade-in" style="padding:2rem;margin-bottom:2rem;">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.5rem;">🎯 Skill Progress</h3>
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+      <div class="progress-wrap">
+        <div class="progress-label"><span>🎤 Speaking Confidence</span><span id="progSpeak">0%</span></div>
+        <div class="progress-track"><div class="progress-fill" id="progSpeakBar" style="width:0%;background:linear-gradient(135deg,#4f8ef7,#22d3ee)"></div></div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>📚 Vocabulary Range</span><span id="progVocab">0%</span></div>
+        <div class="progress-track"><div class="progress-fill" id="progVocabBar" style="width:0%;background:linear-gradient(135deg,#8b5cf6,#ec4899)"></div></div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>✏️ Grammar Accuracy</span><span id="progGrammar">0%</span></div>
+        <div class="progress-track"><div class="progress-fill" id="progGrammarBar" style="width:0%;background:linear-gradient(135deg,#10b981,#4f8ef7)"></div></div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>🏆 Challenge Completion</span><span id="progChallenge">0%</span></div>
+        <div class="progress-track"><div class="progress-fill" id="progChallengeBar" style="width:0%;background:linear-gradient(135deg,#f59e0b,#ef4444)"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset -->
+  <div class="danger-zone fade-in">
+    <div class="card" style="padding:1.75rem;border-color:rgba(239,68,68,0.2);">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.5rem;color:#ef4444;">⚠️ Reset Progress</h3>
+      <p style="font-size:0.87rem;color:var(--text-muted);margin-bottom:1rem;">This will clear all your local progress data. This cannot be undone.</p>
+      <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-danger btn-sm" id="resetBtn">🗑 Reset All Data</button>
+        <button class="btn btn-primary btn-sm" id="demoBtn">🎭 Load Demo Data</button>
+        <span style="font-size:0.8rem;color:var(--text-muted);">Demo data lets you see the dashboard with sample stats</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <a href="index.html" class="footer-brand"><span>🎤</span><span class="text-gradient">SmallTalkLab</span></a>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

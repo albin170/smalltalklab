@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmallTalkLab — Master English Speaking with AI</title>
+  <meta name="description" content="Practice spoken English, improve pronunciation, and build communication skills with AI-powered real-time feedback. Free forever." />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ── Home-specific styles ── */
+    .hero-section {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: calc(var(--nav-height) + 2rem) 2rem 4rem;
+      overflow: hidden;
+    }
+
+    #heroCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .hero-content { position: relative; z-index: 1; max-width: 900px; }
+
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem 0.4rem 0.5rem;
+      background: rgba(79, 142, 247, 0.1);
+      border: 1px solid rgba(79, 142, 247, 0.25);
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent-blue);
+      margin-bottom: 2rem;
+      letter-spacing: 0.02em;
+      animation: pillFloat 3s ease-in-out infinite;
+    }
+
+    .hero-pill .dot {
+      width: 8px; height: 8px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+      box-shadow: 0 0 6px var(--accent-green);
+    }
+
+    @keyframes pillFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .hero-title {
+      font-size: clamp(3rem, 7vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1.05;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.03em;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 3rem;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 0;
+    }
+
+    .hero-cta {
+      font-size: 1.1rem;
+      padding: 1.1rem 2.5rem;
+      box-shadow: 0 8px 40px rgba(79, 142, 247, 0.4);
+    }
+
+    /* ── Features ── */
+    .feature-icon {
+      width: 54px; height: 54px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .feature-icon.blue { background: rgba(79,142,247,0.15); }
+    .feature-icon.violet { background: rgba(139,92,246,0.15); }
+    .feature-icon.cyan { background: rgba(34,211,238,0.15); }
+    .feature-icon.green { background: rgba(16,185,129,0.15); }
+    .feature-icon.amber { background: rgba(245,158,11,0.15); }
+    .feature-icon.pink { background: rgba(236,72,153,0.15); }
+
+    .feature-card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+    }
+
+    .feature-card p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ── How It Works ── */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      position: relative;
+    }
+
+    .steps-grid::before {
+      content: '';
+      position: absolute;
+      top: 36px;
+      left: calc(16.67% + 36px);
+      right: calc(16.67% + 36px);
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-violet));
+      opacity: 0.3;
+    }
+
+    .step-card {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .step-number {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #fff;
+      margin: 0 auto 1.5rem;
+      position: relative;
+      box-shadow: 0 0 30px rgba(79, 142, 247, 0.3);
+    }
+
+    .step-card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+    }
+
+    .step-card p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+
+
+    /* ── Testimonials ── */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .testimonial-card { padding: 2rem; }
+
+    .testimonial-stars {
+      color: var(--accent-amber);
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .testimonial-text {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+      font-style: italic;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .author-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      font-family: var(--font-heading);
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .author-info .name {
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .author-info .role {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ── CTA Section ── */
+    .cta-section {
+      background: var(--gradient-primary);
+      border-radius: var(--radius-xl);
+      padding: 5rem 3rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+
+    .cta-section h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .cta-section p {
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.8);
+      max-width: 500px;
+      margin: 0 auto 2.5rem;
+      position: relative;
+    }
+
+    .btn-white {
+      background: #fff;
+      color: var(--accent-blue);
+      font-weight: 700;
+    }
+
+    .btn-white:hover {
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    }
+
+    @media (max-width: 768px) {
+      .steps-grid { grid-template-columns: 1fr; }
+      .steps-grid::before { display: none; }
+      .testimonials-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-animated">
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+</div>
+<div class="bg-grid"></div>
+
+<!-- Navbar -->
+<nav class="navbar" id="navbar">
+  <a href="index.html" class="nav-brand">
+    <div class="brand-icon">🎤</div>
+    <span class="text-gradient">SmallTalkLab</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="speaking.html">Practice</a></li>
+    <li><a href="chat.html">AI Chat</a></li>
+    <li><a href="vocabulary.html">Vocabulary</a></li>
+    <li><a href="grammar.html">Grammar</a></li>
+    <li><a href="challenges.html">Challenges</a></li>
+    <li><a href="dashboard.html">Dashboard</a></li>
+  </ul>
+  <a href="speaking.html" class="btn btn-primary btn-sm nav-cta">Start Speaking</a>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index.html">🏠 Home</a>
+  <a href="speaking.html">🎤 Speaking Practice</a>
+  <a href="chat.html">🤖 AI Chat</a>
+  <a href="vocabulary.html">📚 Vocabulary</a>
+  <a href="grammar.html">✏️ Grammar</a>
+  <a href="challenges.html">🏆 Challenges</a>
+  <a href="dashboard.html">📊 Dashboard</a>
+  <a href="speaking.html" class="btn btn-primary mt-2">Start Speaking Free</a>
+</div>
+
+<!-- HERO -->
+<section class="hero-section">
+  <canvas id="heroCanvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-pill">
+      <span class="dot"></span>
+      AI-Powered English Coach — Always Free
+    </div>
+    <h1 class="hero-title">
+      Speak English<br>
+      <span class="text-gradient">Confidently</span><br>
+      with AI
+    </h1>
+    <p class="hero-sub">
+      Practice pronunciation, get instant feedback, chat with an AI tutor,
+      and track your progress — all in one place. No sign-up required.
+    </p>
+    <div class="hero-actions">
+      <a href="speaking.html" class="btn btn-primary btn-lg hero-cta">
+        🎤 Start Speaking Now
+      </a>
+      <a href="chat.html" class="btn btn-secondary btn-lg">
+        🤖 Chat with AI Tutor
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<!-- FEATURES -->
+<div class="section" style="padding-top:2rem;">
+  <div class="section-header fade-in">
+    <div class="section-label">✨ Everything You Need</div>
+    <h2 class="section-title">Learn English <span class="text-gradient">Faster</span></h2>
+    <p class="section-subtitle">Six powerful tools designed to take your English from good to fluent.</p>
+  </div>
+  <div class="grid-3">
+    <div class="card feature-card fade-in">
+      <div class="feature-icon blue">🎤</div>
+      <h3>AI Speaking Practice</h3>
+      <p>Speak into your mic, get real-time transcription and pronunciation scoring powered by Web Speech API.</p>
+      <a href="speaking.html" class="btn btn-ghost btn-sm mt-2">Try Now →</a>
+    </div>
+    <div class="card feature-card fade-in">
+      <div class="feature-icon violet">🤖</div>
+      <h3>AI Conversation Coach</h3>
+      <p>Chat with Aria, your AI English tutor. Get grammar corrections and vocabulary suggestions instantly.</p>
+      <a href="chat.html" class="btn btn-ghost btn-sm mt-2">Start Chat →</a>
+    </div>
+    <div class="card feature-card fade-in">
+      <div class="feature-icon cyan">📚</div>
+      <h3>Vocabulary Builder</h3>
+      <p>Learn 5 new words daily with flashcards, quizzes, and real sentence examples.</p>
+      <a href="vocabulary.html" class="btn btn-ghost btn-sm mt-2">Build Vocab →</a>
+    </div>
+    <div class="card feature-card fade-in">
+      <div class="feature-icon green">✏️</div>
+      <h3>Grammar Checker</h3>
+      <p>Type any sentence and get instant grammar corrections with better phrasing suggestions.</p>
+      <a href="grammar.html" class="btn btn-ghost btn-sm mt-2">Check Grammar →</a>
+    </div>
+    <div class="card feature-card fade-in">
+      <div class="feature-icon amber">🏆</div>
+      <h3>Daily Challenges</h3>
+      <p>Complete daily speaking tasks: introduce yourself, mock interviews, debate topics, and more.</p>
+      <a href="challenges.html" class="btn btn-ghost btn-sm mt-2">Accept Challenge →</a>
+    </div>
+    <div class="card feature-card fade-in">
+      <div class="feature-icon pink">📊</div>
+      <h3>Progress Dashboard</h3>
+      <p>Track your speaking streak, accuracy scores, and completed lessons with beautiful charts.</p>
+      <a href="dashboard.html" class="btn btn-ghost btn-sm mt-2">View Progress →</a>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="section">
+  <div class="section-header fade-in">
+    <div class="section-label">🚀 How It Works</div>
+    <h2 class="section-title">Three Steps to <span class="text-gradient">Fluency</span></h2>
+    <p class="section-subtitle">Start improving your English in minutes, not months.</p>
+  </div>
+  <div class="steps-grid fade-in">
+    <div class="card step-card">
+      <div class="step-number">1</div>
+      <h3>Choose Your Practice</h3>
+      <p>Pick from speaking practice, AI chat, vocabulary, grammar, or daily challenges based on what you need most.</p>
+    </div>
+    <div class="card step-card">
+      <div class="step-number">2</div>
+      <h3>Practice with AI</h3>
+      <p>Speak, type, or interact with our AI tools. Get instant, personalized feedback to correct mistakes in real time.</p>
+    </div>
+    <div class="card step-card">
+      <div class="step-number">3</div>
+      <h3>Track & Improve</h3>
+      <p>Monitor your progress on the dashboard. Build daily streaks and watch your English transform week by week.</p>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- TESTIMONIALS -->
+<div class="section">
+  <div class="section-header fade-in">
+    <div class="section-label">💬 Success Stories</div>
+    <h2 class="section-title">Loved by <span class="text-gradient">Learners</span></h2>
+    <p class="section-subtitle">Real stories from real people who transformed their English.</p>
+  </div>
+  <div class="testimonials-grid">
+    <div class="card testimonial-card fade-in">
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">"I went from being terrified to speak in English to leading meetings at my international company. SmallTalkLab's daily challenges were a game changer."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar" style="background:var(--gradient-primary);">R</div>
+        <div class="author-info">
+          <div class="name">Rahul Sharma</div>
+          <div class="role">Software Engineer, Bangalore</div>
+        </div>
+      </div>
+    </div>
+    <div class="card testimonial-card fade-in">
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">"The AI pronunciation feedback is incredible. It caught errors I didn't even know I was making. My IELTS score jumped from 6.5 to 8.0 in 2 months!"</p>
+      <div class="testimonial-author">
+        <div class="author-avatar" style="background:linear-gradient(135deg,#8b5cf6,#ec4899);">M</div>
+        <div class="author-info">
+          <div class="name">Maria Santos</div>
+          <div class="role">IELTS Candidate, Philippines</div>
+        </div>
+      </div>
+    </div>
+    <div class="card testimonial-card fade-in">
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">"As a non-native speaker working in London, I needed to polish my business English fast. The mock interview challenge prepared me perfectly."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar" style="background:linear-gradient(135deg,#22d3ee,#4f8ef7);">A</div>
+        <div class="author-info">
+          <div class="name">Ahmed Al-Rashidi</div>
+          <div class="role">Financial Analyst, London</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="section section-sm">
+  <div class="cta-section fade-in">
+    <h2>Ready to Speak English Confidently?</h2>
+    <p>Join 50,000+ learners already transforming their English. Start for free — no registration needed.</p>
+    <div class="flex gap-2 justify-center flex-wrap">
+      <a href="speaking.html" class="btn btn-white btn-lg">🎤 Start Speaking Free</a>
+      <a href="dashboard.html" class="btn btn-secondary btn-lg" style="color:#fff;border-color:rgba(255,255,255,0.3);">📊 View Demo Dashboard</a>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-inner">
+    <a href="index.html" class="footer-brand">
+      <span>🎤</span>
+      <span class="text-gradient">SmallTalkLab</span>
+    </a>
+    <ul class="footer-links">
+      <li><a href="speaking.html">Speaking Practice</a></li>
+      <li><a href="chat.html">AI Chat</a></li>
+      <li><a href="vocabulary.html">Vocabulary</a></li>
+      <li><a href="grammar.html">Grammar</a></li>
+      <li><a href="challenges.html">Challenges</a></li>
+      <li><a href="dashboard.html">Dashboard</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+  initParticles('heroCanvas');
+</script>
+</body>
+</html>

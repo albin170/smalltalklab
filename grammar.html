@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grammar Checker — SmallTalkLab</title>
+  <meta name="description" content="Check your English grammar instantly. Get corrections and better sentence suggestions." />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .grammar-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem 4rem;
+    }
+
+    /* ── Input Area ── */
+    .grammar-input-card { padding: 2rem; }
+
+    .grammar-textarea {
+      width: 100%;
+      min-height: 200px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      padding: 1.25rem;
+      transition: var(--transition);
+      outline: none;
+      resize: vertical;
+      line-height: 1.7;
+    }
+
+    .grammar-textarea:focus {
+      border-color: var(--accent-blue);
+      background: rgba(79, 142, 247, 0.04);
+      box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.1);
+    }
+
+    .grammar-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .char-count {
+      margin-left: auto;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Result Area ── */
+    .result-display {
+      min-height: 100px;
+      padding: 1.25rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      line-height: 1.8;
+      margin-top: 1.25rem;
+    }
+
+    .error-word {
+      background: rgba(239, 68, 68, 0.15);
+      border-bottom: 2px solid #ef4444;
+      color: #fca5a5;
+      cursor: help;
+      border-radius: 3px;
+      padding: 0 2px;
+      position: relative;
+    }
+
+    .corrected-word {
+      background: rgba(16, 185, 129, 0.15);
+      border-bottom: 2px solid var(--accent-green);
+      color: #6ee7b7;
+      border-radius: 3px;
+      padding: 0 2px;
+    }
+
+    /* ── Error List ── */
+    .error-list { margin-top: 1.5rem; }
+
+    .error-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-md);
+      background: rgba(239, 68, 68, 0.06);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      margin-bottom: 0.75rem;
+    }
+
+    .error-icon { font-size: 1.2rem; flex-shrink: 0; }
+
+    .error-detail .original {
+      font-size: 0.85rem;
+      color: #fca5a5;
+      text-decoration: line-through;
+    }
+
+    .error-detail .fix {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--accent-green);
+    }
+
+    .error-detail .reason {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .apply-fix {
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    /* ── Score Ring (small) ── */
+    .mini-score {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.25rem;
+      background: var(--gradient-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+
+    .mini-score-ring {
+      width: 70px; height: 70px;
+      flex-shrink: 0;
+    }
+
+    .mini-score-ring circle {
+      fill: none;
+      stroke-width: 7;
+      stroke-linecap: round;
+    }
+
+    .mini-score-ring .bg { stroke: rgba(255,255,255,0.06); }
+    .mini-score-ring .fill {
+      stroke: var(--accent-green);
+      stroke-dasharray: 188.5;
+      stroke-dashoffset: 188.5;
+      transition: stroke-dashoffset 1s ease;
+      transform: rotate(-90deg);
+      transform-origin: center;
+    }
+
+    /* ── Tips sidebar ── */
+    .tip-item {
+      padding: 0.875rem 1.1rem;
+      border-radius: var(--radius-md);
+      margin-bottom: 0.6rem;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      font-size: 0.87rem;
+      line-height: 1.5;
+    }
+
+    .tip-item .tip-rule {
+      font-weight: 700;
+      color: var(--accent-blue);
+      margin-bottom: 0.3rem;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .examples-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .example-row {
+      display: flex;
+      gap: 0.75rem;
+      font-size: 0.83rem;
+    }
+
+    .ex-label {
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      flex-shrink: 0;
+      align-self: flex-start;
+      margin-top: 1px;
+    }
+
+    .ex-correct { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+    .ex-wrong { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+    @media (max-width: 900px) {
+      .grammar-layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-animated"><div class="bg-orb bg-orb-1"></div><div class="bg-orb bg-orb-2"></div></div>
+<div class="bg-grid"></div>
+
+<nav class="navbar" id="navbar">
+  <a href="index.html" class="nav-brand"><div class="brand-icon">🎤</div><span class="text-gradient">SmallTalkLab</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li><li><a href="speaking.html">Practice</a></li>
+    <li><a href="chat.html">AI Chat</a></li><li><a href="vocabulary.html">Vocabulary</a></li>
+    <li><a href="grammar.html">Grammar</a></li><li><a href="challenges.html">Challenges</a></li>
+    <li><a href="dashboard.html">Dashboard</a></li>
+  </ul>
+  <a href="speaking.html" class="btn btn-primary btn-sm nav-cta">Start Speaking</a>
+  <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index.html">🏠 Home</a><a href="speaking.html">🎤 Speaking Practice</a>
+  <a href="chat.html">🤖 AI Chat</a><a href="vocabulary.html">📚 Vocabulary</a>
+  <a href="grammar.html">✏️ Grammar</a><a href="challenges.html">🏆 Challenges</a>
+  <a href="dashboard.html">📊 Dashboard</a>
+</div>
+
+<div class="page-hero">
+  <div class="section-label">✏️ Grammar Checker</div>
+  <h1>Perfect Your <span class="text-gradient">Grammar</span></h1>
+  <p>Type any sentence and instantly see grammar errors, corrections, and better alternatives.</p>
+</div>
+
+<div class="grammar-layout">
+  <!-- Left: Editor -->
+  <div>
+    <div class="card grammar-input-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <h2 style="font-size:1.1rem;font-weight:700;">✍️ Your Text</h2>
+        <div class="mini-score">
+          <svg class="mini-score-ring" viewBox="0 0 60 60">
+            <circle class="bg" cx="30" cy="30" r="30"/>
+            <circle class="fill" id="grammarRing" cx="30" cy="30" r="30"/>
+          </svg>
+          <div>
+            <div style="font-family:var(--font-heading);font-size:1.6rem;font-weight:900;" id="grammarScore">—</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);">Grammar Score</div>
+          </div>
+        </div>
+      </div>
+
+      <textarea class="grammar-textarea" id="grammarInput" placeholder="Type or paste your English text here...
+
+Examples to try:
+• I am go to the store yesterday.
+• She don't likes coffee.
+• He have a good idea.
+• I buyed a new book.
+• Its a beautiful day, your welcome!"></textarea>
+
+      <div class="grammar-actions">
+        <button class="btn btn-primary" id="checkBtn">✅ Check Grammar</button>
+        <button class="btn btn-ghost btn-sm" id="clearBtn">🗑 Clear</button>
+        <button class="btn btn-ghost btn-sm" id="sampleBtn">📝 Try Sample</button>
+        <span class="char-count" id="charCount">0 / 500</span>
+      </div>
+
+      <!-- Highlighted Result -->
+      <div id="resultSection" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1.5rem;margin-bottom:0.75rem;">
+          <h3 style="font-size:0.95rem;font-weight:700;">📋 Analyzed Text</h3>
+          <button class="btn btn-success btn-sm" id="copyFixed">📋 Copy Corrected</button>
+        </div>
+        <div class="result-display" id="resultDisplay"></div>
+
+        <!-- Errors -->
+        <div class="error-list" id="errorList"></div>
+
+        <!-- Better sentence -->
+        <div id="betterSentence" style="display:none;margin-top:1.5rem;">
+          <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:0.75rem;">💡 Enhanced Version</h3>
+          <div class="card" style="padding:1.25rem;border-color:rgba(79,142,247,0.3);background:rgba(79,142,247,0.05);">
+            <p style="font-size:1rem;line-height:1.7;" id="betterText"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Tips -->
+  <div>
+    <div class="card" style="padding:1.5rem;margin-bottom:1.5rem;">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;">📊 Quick Stats</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+        <div style="text-align:center;padding:0.875rem;background:var(--bg-card);border-radius:var(--radius-md);">
+          <div style="font-size:1.6rem;font-weight:900;font-family:var(--font-heading);color:#ef4444;" id="errorCount">0</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">Errors Found</div>
+        </div>
+        <div style="text-align:center;padding:0.875rem;background:var(--bg-card);border-radius:var(--radius-md);">
+          <div style="font-size:1.6rem;font-weight:900;font-family:var(--font-heading);color:var(--accent-blue);" id="wordCount">0</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">Words</div>
+        </div>
+        <div style="text-align:center;padding:0.875rem;background:var(--bg-card);border-radius:var(--radius-md);">
+          <div style="font-size:1.6rem;font-weight:900;font-family:var(--font-heading);color:var(--accent-green);" id="fixedCount">0</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">Fixed Total</div>
+        </div>
+        <div style="text-align:center;padding:0.875rem;background:var(--bg-card);border-radius:var(--radius-md);">
+          <div style="font-size:1.6rem;font-weight:900;font-family:var(--font-heading);color:var(--accent-violet);" id="checksCount">0</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">Checks Done</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:1.5rem;">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;">💡 Grammar Rules</h3>
+
+      <div class="tip-item">
+        <div class="tip-rule">Subject-Verb Agreement</div>
+        <div>The verb must match the subject in number.</div>
+        <div class="examples-wrap">
+          <div class="example-row"><span class="ex-label ex-correct">✓</span> She <strong>likes</strong> coffee.</div>
+          <div class="example-row"><span class="ex-label ex-wrong">✗</span> She <em>like</em> coffee.</div>
+        </div>
+      </div>
+
+      <div class="tip-item">
+        <div class="tip-rule">A vs. An</div>
+        <div>Use "an" before vowel sounds (a, e, i, o, u).</div>
+        <div class="examples-wrap">
+          <div class="example-row"><span class="ex-label ex-correct">✓</span> <strong>An</strong> apple, <strong>an</strong> hour.</div>
+          <div class="example-row"><span class="ex-label ex-wrong">✗</span> <em>A</em> apple, <em>a</em> hour.</div>
+        </div>
+      </div>
+
+      <div class="tip-item">
+        <div class="tip-rule">Tense Consistency</div>
+        <div>Don't mix past and present in the same sentence.</div>
+        <div class="examples-wrap">
+          <div class="example-row"><span class="ex-label ex-correct">✓</span> I <strong>went</strong> to the store and <strong>bought</strong> bread.</div>
+          <div class="example-row"><span class="ex-label ex-wrong">✗</span> I <em>go</em> to the store and <em>bought</em> bread.</div>
+        </div>
+      </div>
+
+      <div class="tip-item">
+        <div class="tip-rule">Its vs. It's</div>
+        <div>"It's" = "it is" or "it has". "Its" = belonging to it.</div>
+        <div class="examples-wrap">
+          <div class="example-row"><span class="ex-label ex-correct">✓</span> <strong>It's</strong> raining. The dog loves <strong>its</strong> bone.</div>
+          <div class="example-row"><span class="ex-label ex-wrong">✗</span> <em>Its</em> raining. The dog loves <em>it's</em> bone.</div>
+        </div>
+      </div>
+
+      <div class="tip-item">
+        <div class="tip-rule">Double Negatives</div>
+        <div>Avoid using two negatives in one clause.</div>
+        <div class="examples-wrap">
+          <div class="example-row"><span class="ex-label ex-correct">✓</span> I don't have <strong>any</strong> money.</div>
+          <div class="example-row"><span class="ex-label ex-wrong">✗</span> I don't have <em>no</em> money.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <a href="index.html" class="footer-brand"><span>🎤</span><span class="text-gradient">SmallTalkLab</span></a>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script src="js/grammar.js"></script>
+</body>
+</html>

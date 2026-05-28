@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Speaking Practice — SmallTalkLab</title>
+  <meta name="description" content="Practice English pronunciation with AI. Speak into your microphone and get instant pronunciation scores and corrections." />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .speaking-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem 4rem;
+    }
+
+    /* ── Mic Area ── */
+    .mic-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .mic-visualizer {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mic-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid rgba(79, 142, 247, 0.3);
+      animation: micRing 2s ease-in-out infinite;
+    }
+
+    .mic-ring:nth-child(1) { width: 200px; height: 200px; animation-delay: 0s; }
+    .mic-ring:nth-child(2) { width: 160px; height: 160px; animation-delay: 0.3s; }
+    .mic-ring:nth-child(3) { width: 120px; height: 120px; animation-delay: 0.6s; }
+
+    @keyframes micRing {
+      0%, 100% { opacity: 0.2; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.05); }
+    }
+
+    .mic-btn {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      position: relative;
+      z-index: 2;
+      transition: var(--transition);
+      box-shadow: 0 8px 30px rgba(79, 142, 247, 0.4);
+    }
+
+    .mic-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 12px 40px rgba(79, 142, 247, 0.6);
+    }
+
+    .mic-btn.recording {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      box-shadow: 0 8px 30px rgba(239, 68, 68, 0.5);
+      animation: micPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes micPulse {
+      0%, 100% { box-shadow: 0 8px 30px rgba(239, 68, 68, 0.5); }
+      50% { box-shadow: 0 8px 50px rgba(239, 68, 68, 0.8); }
+    }
+
+    .mic-status {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .mic-status.active { color: #ef4444; }
+
+    /* ── Waveform ── */
+    .waveform-container {
+      width: 100%;
+      height: 80px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      position: relative;
+    }
+
+    #waveCanvas { width: 100%; height: 100%; }
+
+    /* ── Target Phrase ── */
+    .phrase-card { width: 100%; }
+
+    .phrase-display {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.5;
+      margin-bottom: 1rem;
+      min-height: 60px;
+    }
+
+    .phrase-word {
+      display: inline-block;
+      margin-right: 6px;
+      transition: var(--transition);
+      border-bottom: 2px solid transparent;
+      padding-bottom: 2px;
+    }
+
+    .phrase-word.correct { color: var(--accent-green); border-color: var(--accent-green); }
+    .phrase-word.incorrect { color: #ef4444; border-color: #ef4444; }
+    .phrase-word.current { color: var(--accent-blue); border-color: var(--accent-blue); }
+
+    /* ── Transcript ── */
+    .transcript-box {
+      width: 100%;
+      min-height: 100px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      font-style: italic;
+    }
+
+    /* ── Score ── */
+    .score-ring-wrap {
+      text-align: center;
+    }
+
+    .score-ring-svg {
+      width: 140px; height: 140px;
+      transform: rotate(-90deg);
+    }
+
+    .score-ring-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 10; }
+    .score-ring-fill {
+      fill: none;
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke: url(#scoreGrad);
+      stroke-dasharray: 351.86;
+      stroke-dashoffset: 351.86;
+      transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .score-number {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      font-weight: 900;
+      text-align: center;
+      margin-top: -10px;
+    }
+
+    .score-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* ── Feedback ── */
+    .feedback-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.875rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .feedback-item.success { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); }
+    .feedback-item.warning { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
+    .feedback-item.error { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
+
+    /* ── Right Panel ── */
+    .right-panel { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .category-pills {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .category-pill {
+      padding: 0.4rem 0.9rem;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      transition: var(--transition);
+    }
+
+    .category-pill:hover,
+    .category-pill.active {
+      background: rgba(79, 142, 247, 0.15);
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+    }
+
+    .phrase-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .phrase-item {
+      padding: 0.875rem 1.25rem;
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .phrase-item:hover,
+    .phrase-item.selected {
+      background: rgba(79, 142, 247, 0.1);
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+    }
+
+    @media (max-width: 900px) {
+      .speaking-layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-animated">
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+</div>
+<div class="bg-grid"></div>
+
+<nav class="navbar" id="navbar">
+  <a href="index.html" class="nav-brand">
+    <div class="brand-icon">🎤</div>
+    <span class="text-gradient">SmallTalkLab</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="speaking.html">Practice</a></li>
+    <li><a href="chat.html">AI Chat</a></li>
+    <li><a href="vocabulary.html">Vocabulary</a></li>
+    <li><a href="grammar.html">Grammar</a></li>
+    <li><a href="challenges.html">Challenges</a></li>
+    <li><a href="dashboard.html">Dashboard</a></li>
+  </ul>
+  <a href="speaking.html" class="btn btn-primary btn-sm nav-cta">Start Speaking</a>
+  <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index.html">🏠 Home</a>
+  <a href="speaking.html">🎤 Speaking Practice</a>
+  <a href="chat.html">🤖 AI Chat</a>
+  <a href="vocabulary.html">📚 Vocabulary</a>
+  <a href="grammar.html">✏️ Grammar</a>
+  <a href="challenges.html">🏆 Challenges</a>
+  <a href="dashboard.html">📊 Dashboard</a>
+</div>
+
+<div class="page-hero">
+  <div class="section-label">🎤 Speaking Practice</div>
+  <h1>Practice Your <span class="text-gradient">Pronunciation</span></h1>
+  <p>Speak the target phrase, get an instant pronunciation score, and learn how to sound like a native speaker.</p>
+</div>
+
+<div class="speaking-layout">
+  <!-- LEFT: Mic + Transcript -->
+  <div class="mic-panel">
+    <!-- Visualizer -->
+    <div class="mic-visualizer">
+      <div class="mic-ring"></div>
+      <div class="mic-ring"></div>
+      <div class="mic-ring"></div>
+      <button class="mic-btn" id="micBtn" title="Click to record">🎤</button>
+    </div>
+    <div class="mic-status" id="micStatus">Click the mic to start recording</div>
+
+    <!-- Waveform -->
+    <div class="waveform-container">
+      <canvas id="waveCanvas"></canvas>
+    </div>
+
+    <!-- Target Phrase Card -->
+    <div class="card phrase-card" style="width:100%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <h3 style="font-size:1rem;color:var(--text-secondary);">🎯 Target Phrase</h3>
+        <button class="btn btn-ghost btn-sm" id="newPhraseBtn">New Phrase 🔄</button>
+      </div>
+      <div class="phrase-display" id="phraseDisplay">Click "New Phrase" to begin</div>
+      <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+        <button class="btn btn-ghost btn-sm" id="listenBtn">🔊 Hear It</button>
+        <button class="btn btn-primary btn-sm" id="checkBtn" style="display:none;">✅ Check Score</button>
+      </div>
+    </div>
+
+    <!-- Transcript -->
+    <div class="card" style="width:100%;">
+      <h3 style="font-size:1rem;color:var(--text-secondary);margin-bottom:0.75rem;">📝 Your Speech</h3>
+      <div class="transcript-box" id="transcriptBox">Your speech will appear here as you speak...</div>
+    </div>
+
+    <!-- Score -->
+    <div class="card" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:1rem;" id="scorePanel">
+      <h3 style="font-size:1rem;color:var(--text-secondary);">📊 Pronunciation Score</h3>
+      <div class="score-ring-wrap">
+        <svg class="score-ring-svg" viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" style="stop-color:#4f8ef7"/>
+              <stop offset="100%" style="stop-color:#8b5cf6"/>
+            </linearGradient>
+          </defs>
+          <circle class="score-ring-bg" cx="60" cy="60" r="56"/>
+          <circle class="score-ring-fill" id="scoreRing" cx="60" cy="60" r="56"/>
+        </svg>
+        <div class="score-number" id="scoreNumber">—</div>
+        <div class="score-label">out of 100</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Feedback + Phrases -->
+  <div class="right-panel">
+    <!-- AI Feedback -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;">🤖 AI Feedback</h3>
+      <div id="feedbackPanel">
+        <div class="feedback-item success">
+          <span>💡</span>
+          <span>Select a phrase and press Record to get personalized AI feedback on your pronunciation.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;">💡 Pronunciation Tips</h3>
+      <div style="display:flex;flex-direction:column;gap:0.6rem;">
+        <div class="feedback-item warning">
+          <span>👄</span>
+          <span>Relax your jaw and open your mouth wider for clearer vowels.</span>
+        </div>
+        <div class="feedback-item success">
+          <span>🎵</span>
+          <span>English has natural stress patterns — emphasize content words.</span>
+        </div>
+        <div class="feedback-item warning">
+          <span>💨</span>
+          <span>Practice linking words together smoothly for natural speech flow.</span>
+        </div>
+        <div class="feedback-item success">
+          <span>🐌</span>
+          <span>Speak slowly when learning — clarity beats speed every time.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Practice Phrases -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;">📝 Practice Phrases</h3>
+      <div class="category-pills" id="categoryPills">
+        <button class="category-pill active" data-cat="daily">Daily Life</button>
+        <button class="category-pill" data-cat="business">Business</button>
+        <button class="category-pill" data-cat="travel">Travel</button>
+        <button class="category-pill" data-cat="interview">Interview</button>
+        <button class="category-pill" data-cat="tongue">Tongue Twisters</button>
+      </div>
+      <div class="phrase-list mt-2" id="phraseList"></div>
+    </div>
+
+    <!-- Session Stats -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;">📈 Session Stats</h3>
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span>Accuracy</span>
+            <span id="sessionAccuracy">0%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="accuracyBar" style="width:0%"></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div style="text-align:center;padding:1rem;background:var(--bg-card);border-radius:var(--radius-md);">
+            <div style="font-size:1.8rem;font-weight:900;font-family:var(--font-heading);" id="attemptsCount">0</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);">Attempts</div>
+          </div>
+          <div style="text-align:center;padding:1rem;background:var(--bg-card);border-radius:var(--radius-md);">
+            <div style="font-size:1.8rem;font-weight:900;font-family:var(--font-heading);color:var(--accent-green);" id="bestScore">0</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);">Best Score</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <a href="index.html" class="footer-brand"><span>🎤</span><span class="text-gradient">SmallTalkLab</span></a>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script src="js/speaking.js"></script>
+</body>
+</html>
